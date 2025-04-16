@@ -1,0 +1,154 @@
+/* Main styles for ID Document Verification app */
+
+/* Page title and headers */
+h1, h2, h3 {
+    color: #1E3A8A;
+    font-family: 'Helvetica Neue', sans-serif;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 1rem 0;
+}
+
+h3 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin: 0.8rem 0;
+}
+
+/* Streamlit sidebar */
+.sidebar .sidebar-content {
+    background-color: #F3F4F6;
+    padding: 1rem;
+}
+
+/* Progress indicators */
+.success {
+    color: #10B981;
+    font-weight: bold;
+}
+
+.pending {
+    color: #6B7280;
+}
+
+/* Main content area */
+.main .block-container {
+    padding: 2rem;
+}
+
+/* Card-like elements for results */
+.css-1r6slb0 {
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.stButton>button {
+    border-radius: 20px;
+    font-weight: 600;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+/* Primary action button */
+.stButton>button:last-child {
+    background-color: #1E40AF;
+    color: white;
+}
+
+.stButton>button:last-child:hover {
+    background-color: #1E3A8A;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Secondary action button */
+.stButton>button:first-child {
+    background-color: #F3F4F6;
+    color: #374151;
+    border: 1px solid #D1D5DB;
+}
+
+.stButton>button:first-child:hover {
+    background-color: #E5E7EB;
+}
+
+/* JSON display */
+pre {
+    background-color: #F9FAFB;
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+}
+
+/* Success and error messages */
+.success-message {
+    background-color: #ECFDF5;
+    color: #047857;
+    padding: 0.8rem;
+    border-radius: 6px;
+    font-weight: 500;
+    margin: 1rem 0;
+}
+
+.error-message {
+    background-color: #FEF2F2;
+    color: #B91C1C;
+    padding: 0.8rem;
+    border-radius: 6px;
+    font-weight: 500;
+    margin: 1rem 0;
+}
+
+/* Image containers */
+.image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.image-container img {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading spinner */
+.stSpinner {
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    h3 {
+        font-size: 1.2rem;
+    }
+    
+    .main .block-container {
+        padding: 1rem;
+    }
+} 

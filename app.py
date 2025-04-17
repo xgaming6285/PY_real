@@ -15,7 +15,7 @@ API_KEY = "AIzaSyAcD4nCukDuiL3PLRwjwC3Qu_K0atpC20Y"
 genai.configure(api_key=API_KEY)
 
 # Initialize Gemini model
-model = genai.GenerativeModel('gemini-1.5-pro-vision')
+model = genai.GenerativeModel('gemini-2.5-pro')
 
 # Page config
 st.set_page_config(
@@ -64,8 +64,11 @@ def process_id_document(image):
         For additional_info, include any other fields present on the document.
         """
         
-        # Call Gemini model
-        response = model.generate_content([prompt, {"mime_type": "image/jpeg", "data": byte_stream.getvalue()}])
+        # Call Gemini model with image
+        response = model.generate_content([
+            prompt, 
+            {"mime_type": "image/jpeg", "data": byte_stream.getvalue()}
+        ])
         
         # Extract JSON from response text
         _, json_str = extract_json_from_text(response.text)
@@ -132,7 +135,7 @@ def verify_face(id_image, face_image):
         return False, str(e)
 
 def capture_id_document():
-    """Capture ID document using Streamlit's camera input"""
+    """Capture ID document using Streamlit's camera input with real-time detection"""
     st.title("ID Document Scanner")
     st.write("Please position your ID document in front of the camera.")
     
@@ -141,14 +144,36 @@ def capture_id_document():
         st.session_state.id_image = None
     if "document_detected" not in st.session_state:
         st.session_state.document_detected = False
-    
+    if "detection_attempts" not in st.session_state:
+        st.session_state.detection_attempts = 0
+    if "auto_capture" not in st.session_state:
+        st.session_state.auto_capture = False
+        
     # Create a container for instructions
     instruction_container = st.container()
     with instruction_container:
-        st.info("📱 Position your ID document within the camera frame and click the capture button.")
+        st.info("📱 Position your ID document within the camera frame.")
+    
+    # Add option for auto-capture
+    st.session_state.auto_capture = st.checkbox("Enable automatic capture when document is detected", 
+                                                value=st.session_state.auto_capture)
     
     # Use Streamlit's camera input
-    camera_image = st.camera_input("Take a picture of your ID document", key="id_document_camera")
+    camera_col1, camera_col2 = st.columns([3, 1])
+    with camera_col1:
+        camera_image = st.camera_input("ID Document Camera", key="id_document_camera")
+    
+    with camera_col2:
+        st.write("Detection Status:")
+        status_placeholder = st.empty()
+        if st.session_state.document_detected:
+            status_placeholder.success("Document Detected")
+        else:
+            status_placeholder.warning("Waiting for Document")
+        
+        # Manual capture button
+        if not st.session_state.auto_capture:
+            st.button("Capture Document", key="manual_capture_btn")
     
     if camera_image is not None:
         # Convert the image to a format we can process
@@ -158,19 +183,58 @@ def capture_id_document():
         # Apply document detection
         processed_frame, document_detected, document_coords = detect_document(image)
         
+        # Show the processed frame with detection overlays
+        st.image(cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB), 
+                use_container_width=True,
+                caption="Detection Result")
+                
+        # Update detection status
         if document_detected:
-            # Extract the document
-            extracted_doc = extract_document(image, document_coords)
-            if extracted_doc is not None:
-                st.session_state.id_image = extracted_doc
-                st.session_state.document_detected = True
-                return extracted_doc
-            else:
-                st.warning("Document detected but could not be extracted properly. Please try again.")
-                return image  # Return the original image as fallback
+            status_placeholder.success("Document Detected")
+            
+            # Auto-capture if enabled
+            if st.session_state.auto_capture:
+                # Extract the document
+                extracted_doc = extract_document(image, document_coords)
+                if extracted_doc is not None:
+                    st.session_state.id_image = extracted_doc
+                    st.session_state.document_detected = True
+                    st.success("✅ Document detected and captured automatically!")
+                    return extracted_doc
         else:
-            st.warning("No document detected in the image. Please try again with better positioning.")
-            return image  # Return the original image
+            status_placeholder.warning("No Document Detected")
+        
+        # Manually capture current frame
+        if st.button("Use This Frame", key="use_current_frame") or st.session_state.get("manual_capture_btn", False):
+            if document_detected:
+                # Extract the document
+                extracted_doc = extract_document(image, document_coords)
+                if extracted_doc is not None:
+                    st.session_state.id_image = extracted_doc
+                    st.session_state.document_detected = True
+                    st.success("✅ Document captured successfully!")
+                    return extracted_doc
+                else:
+                    st.warning("Document detected but could not be extracted properly. Please try again.")
+                    return image  # Return the original image as fallback
+            else:
+                # Increment detection attempts
+                st.session_state.detection_attempts += 1
+                
+                # Provide more helpful guidance after failed attempts
+                if st.session_state.detection_attempts > 1:
+                    st.warning("No document detected. Tips: Ensure good lighting, hold the ID still, and make sure all four corners are visible.")
+                else:
+                    st.warning("No document detected in the image. Please try again with better positioning.")
+                
+                # After multiple failed attempts, allow using the original image anyway
+                if st.session_state.detection_attempts >= 3:
+                    if st.button("Use this image anyway", key="force_use_image"):
+                        st.session_state.id_image = image
+                        st.session_state.document_detected = True
+                        return image
+                
+                return image  # Return the original image
     
     return None
 
@@ -276,7 +340,7 @@ def main():
             with image_container:
                 st.image(cv2.cvtColor(id_image, cv2.COLOR_BGR2RGB), 
                         caption="Captured ID Document",
-                        use_column_width=True)
+                        use_container_width=True)
             
             with st.spinner("Processing ID document with Gemini AI..."):
                 success, data = process_id_document(id_image)
@@ -302,8 +366,8 @@ def main():
         with col1:
             st.subheader("ID Document Image")
             st.image(cv2.cvtColor(st.session_state.id_image, cv2.COLOR_BGR2RGB), 
-                    use_column_width=True,
-                    caption="Captured ID Document")
+                    use_container_width=True,
+                    caption="ID Document")
         
         # Display the extracted data in the second column
         with col2:
@@ -337,7 +401,7 @@ def main():
             with image_container:
                 st.image(cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB), 
                         caption="Captured Face",
-                        use_column_width=True)
+                        use_container_width=True)
             
             with st.spinner("Verifying identity with Gemini AI..."):
                 success, result = verify_face(st.session_state.id_image, face_image)
@@ -372,7 +436,7 @@ def main():
             # Display the ID image in the first column
             with col1:
                 st.image(cv2.cvtColor(st.session_state.id_image, cv2.COLOR_BGR2RGB), 
-                        use_column_width=True,
+                        use_container_width=True,
                         caption="ID Document")
             
             # Display the extracted data in the second column

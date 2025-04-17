@@ -152,70 +152,77 @@ def capture_id_document():
     if "detection_counter" not in st.session_state:
         st.session_state.detection_counter = 0
     
-    # Start video capture
-    cap = cv2.VideoCapture(0)
-    
-    # Check if the webcam is opened correctly
-    if not cap.isOpened():
-        st.error("Could not open webcam. Please check your camera connection.")
-        return None
-    
-    # Process frames until capture button is pressed
-    while not capture_button:
-        success, frame = cap.read()
-        if not success:
-            st.error("Failed to read from webcam")
-            break
+    try:
+        # Start video capture
+        cap = cv2.VideoCapture(0)
         
-        # Apply document detection
-        processed_frame, document_detected, document_coords = detect_document(frame)
+        # Check if the webcam is opened correctly
+        if not cap.isOpened():
+            st.error("Could not open webcam. Please check your camera connection and permissions.")
+            st.info("On mobile devices, make sure you've granted camera permissions to your browser.")
+            return None
         
-        # Update the detection counter
-        if document_detected:
-            st.session_state.detection_counter += 1
-        else:
-            st.session_state.detection_counter = 0
-        
-        # If document is detected for several consecutive frames, indicate it's stable
-        if st.session_state.detection_counter >= 10:
-            st.session_state.document_detected = True
-            
-            # Add a "Ready to capture" text
-            cv2.putText(processed_frame, "READY TO CAPTURE - Press the button", (10, 60), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            
-            # When detected, extract and store the document
-            extracted_doc = extract_document(frame, document_coords)
-            if extracted_doc is not None:
-                st.session_state.id_image = extracted_doc
-        else:
-            st.session_state.document_detected = False
-        
-        # Display the frame
-        video_placeholder.image(cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB), 
-                               channels="RGB", 
-                               use_column_width=True,
-                               caption="Live Camera Feed")
-        
-        # Re-check the button state
-        if button_col2.button("📸 Capture", key="capture_id"):
-            if st.session_state.document_detected and st.session_state.id_image is not None:
+        # Process frames until capture button is pressed
+        while not capture_button:
+            success, frame = cap.read()
+            if not success:
+                st.error("Failed to read from webcam. Please try again.")
                 break
+            
+            # Apply document detection
+            processed_frame, document_detected, document_coords = detect_document(frame)
+            
+            # Update the detection counter
+            if document_detected:
+                st.session_state.detection_counter += 1
             else:
-                st.warning("Please align the ID document properly before capturing")
+                st.session_state.detection_counter = 0
+            
+            # If document is detected for several consecutive frames, indicate it's stable
+            if st.session_state.detection_counter >= 10:
+                st.session_state.document_detected = True
+                
+                # Add a "Ready to capture" text
+                cv2.putText(processed_frame, "READY TO CAPTURE - Press the button", (10, 60), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                
+                # When detected, extract and store the document
+                extracted_doc = extract_document(frame, document_coords)
+                if extracted_doc is not None:
+                    st.session_state.id_image = extracted_doc
+            else:
+                st.session_state.document_detected = False
+            
+            # Display the frame
+            video_placeholder.image(cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB), 
+                                   channels="RGB", 
+                                   use_column_width=True,
+                                   caption="Live Camera Feed")
+            
+            # Re-check the button state
+            if button_col2.button("📸 Capture", key="capture_id"):
+                if st.session_state.document_detected and st.session_state.id_image is not None:
+                    break
+                else:
+                    st.warning("Please align the ID document properly before capturing")
+            
+            # Small pause to reduce CPU usage
+            time.sleep(0.1)
         
-        # Small pause to reduce CPU usage
-        time.sleep(0.1)
-    
-    # Release the capture
-    cap.release()
-    
-    # Return the extracted document if available
-    if st.session_state.document_detected and st.session_state.id_image is not None:
-        return st.session_state.id_image
-    else:
-        # If capture button was pressed but no document was detected, return the raw frame
-        return frame if success else None
+        # Release the capture
+        cap.release()
+        
+        # Return the extracted document if available
+        if st.session_state.document_detected and st.session_state.id_image is not None:
+            return st.session_state.id_image
+        else:
+            # If capture button was pressed but no document was detected, return the raw frame
+            return frame if success else None
+            
+    except Exception as e:
+        st.error(f"An error occurred while accessing the camera: {str(e)}")
+        st.info("Please make sure you've granted camera permissions to your browser.")
+        return None
 
 def capture_face():
     """Capture face for verification"""
@@ -234,52 +241,59 @@ def capture_face():
     if "face_image" not in st.session_state:
         st.session_state.face_image = None
     
-    # Start video capture
-    cap = cv2.VideoCapture(0)
-    
-    # Check if the webcam is opened correctly
-    if not cap.isOpened():
-        st.error("Could not open webcam. Please check your camera connection.")
-        return None
-    
-    # Process frames until capture button is pressed
-    while not capture_button:
-        success, frame = cap.read()
-        if not success:
-            st.error("Failed to read from webcam")
-            break
+    try:
+        # Start video capture
+        cap = cv2.VideoCapture(0)
         
-        # Draw face guide oval
-        height, width = frame.shape[:2]
-        center = (int(width/2), int(height/2))
-        axes = (int(width/4), int(height/3))
-        cv2.ellipse(frame, center, axes, 0, 0, 360, (0, 255, 0), 2)
+        # Check if the webcam is opened correctly
+        if not cap.isOpened():
+            st.error("Could not open webcam. Please check your camera connection and permissions.")
+            st.info("On mobile devices, make sure you've granted camera permissions to your browser.")
+            return None
         
-        # Add text guide
-        cv2.putText(frame, "POSITION FACE WITHIN OVAL", (int(width*0.2), int(height*0.15)), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        # Process frames until capture button is pressed
+        while not capture_button:
+            success, frame = cap.read()
+            if not success:
+                st.error("Failed to read from webcam. Please try again.")
+                break
+            
+            # Draw face guide oval
+            height, width = frame.shape[:2]
+            center = (int(width/2), int(height/2))
+            axes = (int(width/4), int(height/3))
+            cv2.ellipse(frame, center, axes, 0, 0, 360, (0, 255, 0), 2)
+            
+            # Add text guide
+            cv2.putText(frame, "POSITION FACE WITHIN OVAL", (int(width*0.2), int(height*0.15)), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            
+            # Display the frame
+            video_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), 
+                                   channels="RGB", 
+                                   use_column_width=True,
+                                   caption="Live Camera Feed")
+            
+            # Re-check the button state
+            if button_col2.button("📸 Capture", key="capture_face"):
+                st.session_state.face_image = frame.copy()
+                break
+            
+            # Small pause to reduce CPU usage
+            time.sleep(0.1)
         
-        # Display the frame
-        video_placeholder.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), 
-                               channels="RGB", 
-                               use_column_width=True,
-                               caption="Live Camera Feed")
+        # Release the capture
+        cap.release()
         
-        # Re-check the button state
-        if button_col2.button("📸 Capture", key="capture_face"):
-            st.session_state.face_image = frame.copy()
-            break
-        
-        # Small pause to reduce CPU usage
-        time.sleep(0.1)
-    
-    # Release the capture
-    cap.release()
-    
-    # Process captured image if available
-    if st.session_state.face_image is not None:
-        return st.session_state.face_image
-    else:
+        # Process captured image if available
+        if st.session_state.face_image is not None:
+            return st.session_state.face_image
+        else:
+            return None
+            
+    except Exception as e:
+        st.error(f"An error occurred while accessing the camera: {str(e)}")
+        st.info("Please make sure you've granted camera permissions to your browser.")
         return None
 
 def render_success_message(message):

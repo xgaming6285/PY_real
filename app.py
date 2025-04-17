@@ -15,7 +15,7 @@ API_KEY = "AIzaSyAcD4nCukDuiL3PLRwjwC3Qu_K0atpC20Y"
 genai.configure(api_key=API_KEY)
 
 # Initialize Gemini model
-model = genai.GenerativeModel('gemini-2.5-pro')
+model = genai.GenerativeModel('gemini-2.5-pro-preview-03-25')
 
 # Page config
 st.set_page_config(

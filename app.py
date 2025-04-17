@@ -111,39 +111,16 @@ def verify_face(id_image, face_image):
         id_stream.seek(0)
         face_stream.seek(0)
         
-        # Generate prompt for Gemini with more detailed instructions
+        # Generate prompt for Gemini
         prompt = """
-        You are a highly accurate facial recognition system. Compare the person in these two images carefully and critically.
-        
-        Image 1: From an ID document
-        Image 2: A live photo of a person claiming to be the same person as in the ID
-        
-        Focus on permanent facial features like:
-        - Eye distance and shape
-        - Nose structure
-        - Facial bone structure
-        - Ear shape (if visible)
-        - Facial proportions
-        
-        Ignore temporary features like:
-        - Hair style or color differences
-        - Facial expressions
-        - Lighting conditions
-        - Presence/absence of glasses (unless they significantly obscure features)
-        - Aging effects (if reasonable for the time difference)
-        
-        Be strict in your comparison and err on the side of caution. Only provide a high confidence score (>90%) if you are very confident they are the same person.
-        
-        Return your detailed analysis in the following JSON format:
+        Compare the person in these two images. The first image is from an ID document, and the second image is a live photo of a person.
+        Verify if they are the same person and provide a confidence score between 0 and 100.
+        Return your analysis in the following JSON format:
         {
             "same_person": true/false,
-            "confidence_score": 0-100,
-            "key_matching_features": ["feature1", "feature2", ...],
-            "key_differences": ["difference1", "difference2", ...],
-            "remarks": "Detailed explanation of your decision including why you believe they are or are not the same person"
+            "confidence_score": 85,
+            "remarks": "Brief explanation of your decision"
         }
-        
-        Set a higher standard for verification - different individuals should not receive similar high confidence scores.
         """
         
         # Call Gemini model
@@ -543,55 +520,7 @@ def main():
         verify_card = st.container()
         with verify_card:
             st.markdown("### 🔍 Verification Result")
-            
-            # Extract verification data
-            verification_data = json.loads(st.session_state.verification_result) if isinstance(st.session_state.verification_result, str) else st.session_state.verification_result
-            
-            # Define color based on confidence score
-            confidence_score = verification_data.get('confidence_score', 0)
-            if confidence_score >= 90:
-                confidence_color = "green"
-            elif confidence_score >= 75:
-                confidence_color = "orange"
-            else:
-                confidence_color = "red"
-            
-            # Display formatted results
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                st.markdown(f"#### Identity Match: {'✅ MATCH' if verification_data.get('same_person', False) else '❌ NO MATCH'}")
-                st.markdown(f"#### Confidence Score: <span style='color:{confidence_color};font-weight:bold;'>{confidence_score}%</span>", unsafe_allow_html=True)
-                
-                # Display face image next to the verification
-                st.image(cv2.cvtColor(st.session_state.face_image, cv2.COLOR_BGR2RGB), 
-                        use_container_width=True,
-                        caption="Verification Photo")
-            
-            with col2:
-                # Display matching features
-                st.markdown("#### Key Matching Features:")
-                matching_features = verification_data.get('key_matching_features', [])
-                if matching_features:
-                    for feature in matching_features:
-                        st.markdown(f"- ✓ {feature}")
-                else:
-                    st.markdown("- No significant matching features found")
-                
-                st.markdown("#### Key Differences:")
-                differences = verification_data.get('key_differences', [])
-                if differences:
-                    for diff in differences:
-                        st.markdown(f"- ⚠️ {diff}")
-                else:
-                    st.markdown("- No significant differences found")
-            
-            # Display remarks
-            st.markdown("#### Analysis:")
-            st.markdown(f"{verification_data.get('remarks', 'No detailed analysis provided.')}")
-            
-            # Show raw JSON data in expandable section
-            with st.expander("View raw verification data"):
-                st.json(st.session_state.verification_result)
+            st.json(st.session_state.verification_result)
         
         # Save verification data to database
         if st.session_state.verification_id is None:

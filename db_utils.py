@@ -2,6 +2,7 @@ import os
 import io
 import json
 from datetime import datetime
+from pymongo import MongoClient
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv

@@ -17,6 +17,9 @@ genai.configure(api_key=API_KEY)
 # Initialize Gemini model
 model = genai.GenerativeModel('gemini-2.5-pro-exp-03-25')
 
+# Initialize face detection
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
 # Page config
 st.set_page_config(
     page_title="ID Document Scanner", 
@@ -239,29 +242,88 @@ def capture_id_document():
     return None
 
 def capture_face():
-    """Capture face for verification using Streamlit's camera input"""
+    """Capture face for verification using Streamlit's camera input with real-time face detection"""
     st.title("Face Verification")
     st.write("Please position your face in front of the camera.")
     
     # Initialize face image in session state
     if "face_image" not in st.session_state:
         st.session_state.face_image = None
+    if "face_detected" not in st.session_state:
+        st.session_state.face_detected = False
+    if "auto_capture_face" not in st.session_state:
+        st.session_state.auto_capture_face = False
     
     # Create a container for instructions
     instruction_container = st.container()
     with instruction_container:
-        st.info("📱 Position your face centered in the camera frame and click the capture button.")
+        st.info("📱 Position your face centered in the camera frame.")
+    
+    # Add option for auto-capture
+    st.session_state.auto_capture_face = st.checkbox("Enable automatic capture when face is detected", 
+                                                    value=st.session_state.auto_capture_face)
     
     # Use Streamlit's camera input
-    camera_image = st.camera_input("Take a picture of your face", key="face_verification_camera")
+    camera_col1, camera_col2 = st.columns([3, 1])
+    with camera_col1:
+        camera_image = st.camera_input("Face Verification Camera", key="face_verification_camera")
+    
+    with camera_col2:
+        st.write("Detection Status:")
+        status_placeholder = st.empty()
+        if st.session_state.face_detected:
+            status_placeholder.success("Face Detected")
+        else:
+            status_placeholder.warning("Waiting for Face")
+        
+        # Manual capture button
+        if not st.session_state.auto_capture_face:
+            st.button("Capture Face", key="manual_capture_face_btn")
     
     if camera_image is not None:
         # Convert the image to a format we can process
         bytes_data = camera_image.getvalue()
         image = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
         
-        st.session_state.face_image = image
-        return image
+        # Convert to grayscale for face detection
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        # Detect faces
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        
+        # Draw rectangles around faces
+        processed_frame = image.copy()
+        for (x, y, w, h) in faces:
+            cv2.rectangle(processed_frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        
+        # Show the processed frame with face detection
+        st.image(cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB), 
+                use_container_width=True,
+                caption="Face Detection Result")
+        
+        # Update detection status
+        if len(faces) > 0:
+            status_placeholder.success("Face Detected")
+            st.session_state.face_detected = True
+            
+            # Auto-capture if enabled
+            if st.session_state.auto_capture_face:
+                st.session_state.face_image = image
+                st.success("✅ Face detected and captured automatically!")
+                return image
+        else:
+            status_placeholder.warning("No Face Detected")
+            st.session_state.face_detected = False
+        
+        # Manually capture current frame
+        if st.button("Use This Frame", key="use_current_face_frame") or st.session_state.get("manual_capture_face_btn", False):
+            if len(faces) > 0:
+                st.session_state.face_image = image
+                st.success("✅ Face captured successfully!")
+                return image
+            else:
+                st.warning("No face detected in the image. Please try again with better positioning.")
+                return image
     
     return None
 

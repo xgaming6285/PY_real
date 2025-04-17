@@ -517,23 +517,7 @@ def main():
         with verify_card:
             st.markdown("### 🔍 Verification Result")
             st.json(st.session_state.verification_result)
-        
-        # Save verification data to database
-        if st.session_state.verification_id is None:
-            with st.spinner("Saving verification data to database..."):
-                doc_id = db_manager.store_verification_data(
-                    st.session_state.id_data,
-                    st.session_state.verification_result,
-                    st.session_state.id_image,
-                    st.session_state.face_image
-                )
-                if doc_id:
-                    st.session_state.verification_id = doc_id
-                    render_success_message(f"Data saved to database. Verification ID: {doc_id}")
-                else:
-                    render_error_message("Failed to save data to database.")
-        else:
-            st.success(f"Data saved to database. Verification ID: {st.session_state.verification_id}")
+            
         
         # Navigation button for starting over
         st.write("")  # Add some space

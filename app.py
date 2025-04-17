@@ -11,7 +11,6 @@ from document_detection import detect_document, extract_document
 from json_utils import extract_json_from_text, format_json_for_display, validate_id_data
 
 # Initialize database manager
-db_manager = DatabaseManager()
 
 # Configure the Google Generative AI API
 API_KEY = "AIzaSyAcD4nCukDuiL3PLRwjwC3Qu_K0atpC20Y"

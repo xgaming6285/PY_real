@@ -125,14 +125,8 @@ def verify_face(id_image, face_image):
         - Ear shape (if visible)
         - Facial proportions
         
-        Ignore temporary features like:
-        - Hair style or color differences
-        - Facial expressions
-        - Lighting conditions
-        - Presence/absence of glasses (unless they significantly obscure features)
-        - Aging effects (if reasonable for the time difference)
         
-        Be strict in your comparison and err on the side of caution. Only provide a high confidence score (>90%) if you are very confident they are the same person.
+        Be strict in your comparison and err on the side of caution.
         
         Return your detailed analysis in the following JSON format:
         {

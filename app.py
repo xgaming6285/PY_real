@@ -9,7 +9,6 @@ import json
 import os
 from document_detection import detect_document, extract_document
 from json_utils import extract_json_from_text, format_json_for_display, validate_id_data
-from db_utils import DatabaseManager
 
 # Initialize database manager
 db_manager = DatabaseManager()

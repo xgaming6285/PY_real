@@ -116,7 +116,7 @@ def verify_face(id_image, face_image):
         Return your analysis in the following JSON format:
         {
             "same_person": true/false,
-            "confidence_score": 85,
+            "confidence_score": ,
             "remarks": "Brief explanation of your decision"
         }
         """

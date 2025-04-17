@@ -350,7 +350,7 @@ def main():
                 st.session_state.id_data = data
                 st.session_state.id_image = id_image
                 st.session_state.page = "show_data"
-                st.experimental_rerun()
+                st.rerun()
             else:
                 render_error_message(f"Failed to process ID document: {data}")
     
@@ -381,12 +381,12 @@ def main():
         with col1:
             if st.button("⬅️ Rescan ID"):
                 st.session_state.page = "id_scan"
-                st.experimental_rerun()
+                st.rerun()
         
         with col3:
             if st.button("Continue to Face Verification ➡️"):
                 st.session_state.page = "face_verify"
-                st.experimental_rerun()
+                st.rerun()
     
     # Face Verification Page
     elif st.session_state.page == "face_verify":
@@ -410,7 +410,7 @@ def main():
                 render_success_message("Identity verification completed!")
                 st.session_state.verification_result = result
                 st.session_state.page = "result"
-                st.experimental_rerun()
+                st.rerun()
             else:
                 render_error_message(f"Failed to verify identity: {result}")
                 
@@ -418,7 +418,7 @@ def main():
             with col1:
                 if st.button("⬅️ Back to ID Data"):
                     st.session_state.page = "show_data"
-                    st.experimental_rerun()
+                    st.rerun()
     
     # Final Result Page
     elif st.session_state.page == "result":
@@ -463,7 +463,7 @@ def main():
                 st.session_state.id_data = None
                 st.session_state.id_image = None
                 st.session_state.verification_result = None
-                st.experimental_rerun()
+                st.rerun()
 
 if __name__ == "__main__":
     main() 
